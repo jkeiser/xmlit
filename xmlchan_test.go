@@ -3,6 +3,7 @@ package xmlchan
 import "testing"
 import "strings"
 import "encoding/xml"
+import "reflect"
 
 const XMLARIFFIC = `
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -19,7 +20,7 @@ const XMLARIFFIC = `
     </yetanotherlist>
     <Yeti>brown fur</Yeti>
     <Abominable><Serious>snowman</Serious></Abominable>
-    <LessAbominable><Serious>snowman</Serious></LessAbominable>
+    <LessAbominable><Serious>iceman</Serious></LessAbominable>
     <Yeti>blue</Yeti>
   </anotherlist>
   <Yeti>black</Yeti>
@@ -119,24 +120,34 @@ func TestToList(t *testing.T) {
 	}
 }
 
-// func TestProcessTypes(t *testing.T) {
-// 	results, done := Process(strings.NewReader(XMLARIFFIC),
-// 		ProcessTypes(Abominable{}, SuperTramp{}))
-// 	defer close(done)
-// 	expectResult(t, results, SuperTramp{DogDays: 1, FunTimes: "ridgemont"})
-// 	expectResult(t, results, Abominable{Serious: "snowman"})
-// 	expectResult(t, results, SuperTramp{DogDays: 2})
-// 	expectResult(t, results, SuperTramp{DogDays: 3})
-// 	expectStreamClosed(t, results)
-// }
-//
-// func TestProcessTypesByName(t *testing.T) {
-//
-// }
-//
-// func TestProcessTypesByXmlName(t *testing.T) {
-//
-// }
+func TestProcessTypes(t *testing.T) {
+	results, done := Process(strings.NewReader(XMLARIFFIC),
+		ProcessTypes(Abominable{}, SuperTramp{}))
+	defer close(done)
+	expectResult(t, results, SuperTramp{DogDays: 1, FunTimes: "ridgemont"})
+	expectResult(t, results, SuperTramp{DogDays: 2})
+	expectResult(t, results, Abominable{Serious: "snowman"})
+	expectResult(t, results, SuperTramp{DogDays: 3})
+	expectStreamClosed(t, results)
+}
+
+func TestProcessTypesByName(t *testing.T) {
+	// results, done := Process(strings.NewReader(XMLARIFFIC),
+	// 	ProcessTypes(map[string]reflect.Type{
+	// 		"LessAbominable": reflect.TypeOf(Abominable{}),
+	// 		"SuperTramp":     reflect.TypeOf(SuperTramp{}),
+	// 	}))
+	// defer close(done)
+	// expectResult(t, results, SuperTramp{DogDays: 1, FunTimes: "ridgemont"})
+	// expectResult(t, results, SuperTramp{DogDays: 2})
+	// expectResult(t, results, Abominable{Serious: "iceman"})
+	// expectResult(t, results, SuperTramp{DogDays: 3})
+	// expectStreamClosed(t, results)
+}
+
+func TestProcessTypesByXmlName(t *testing.T) {
+
+}
 
 func expectResult(t *testing.T, results <-chan Result, expected interface{}) {
 	x := <-results

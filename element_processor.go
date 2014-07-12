@@ -3,6 +3,8 @@ package xmlchan
 import "encoding/xml"
 import "reflect"
 
+// 1. Switch to iterator
+// 2. Switch to factory functions for decode
 type ElementProcessor func(decoder *Decoder, start *xml.StartElement) (interface{}, error)
 
 func ProcessElements(process ElementProcessor) TokenProcessor {
@@ -11,10 +13,10 @@ func ProcessElements(process ElementProcessor) TokenProcessor {
 		if err != nil {
 			return err
 		}
-		start, ok := token.(*xml.StartElement)
+		start, ok := token.(xml.StartElement)
 		if ok {
 			var result interface{}
-			result, err = process(decoder, start)
+			result, err = process(decoder, &start)
 			if err != nil {
 				return err
 			}
@@ -27,12 +29,12 @@ func ProcessElements(process ElementProcessor) TokenProcessor {
 }
 
 func decodeElement(decoder *Decoder, start *xml.StartElement, t reflect.Type) (interface{}, error) {
-	result := reflect.Zero(t).Interface()
-	err := decoder.DecodeElement(result, start)
+	result := reflect.New(t)
+	err := decoder.DecodeElement(result.Interface(), start)
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return result.Elem().Interface(), nil
 }
 
 // results, errors = xmlchan.ProcessTypes(Actor{}, Series{}).Process(reader)
