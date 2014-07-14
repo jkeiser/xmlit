@@ -9,7 +9,7 @@ import "github.com/jkeiser/iter"
 // stream of XML.
 type CreatorMap map[xml.Name]func() interface{}
 
-// Returns an iterator that uses xml.Decoder to decode a strema of the given types.
+// Returns an iterator that uses xml.Decoder to decode a stream of the given types.
 // Will ignore any containing tags, skipping straight to the actual elements in
 // question.
 //
@@ -25,7 +25,7 @@ func DecodeElements(reader io.ReadCloser, exemplars ...interface{}) iter.Iterato
 	return iterateElements(reader, decodeElementsFunc(exemplars))
 }
 
-// Returns an iterator that uses xml.Decoder to decode a strema of the given types.
+// Returns an iterator that uses xml.Decoder to decode a stream of the given types.
 // Will ignore any containing tags, skipping straight to the actual elements in
 // question.
 //
