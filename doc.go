@@ -15,7 +15,12 @@ for meaningful and immediately usable results.
     Total float64
   }
 
-  iterator := xmlit.DecodeElements(reader, Customer{}, Order{})
-  iterator.Each(func (item interface{}) { fmt.Println(item) })
+  decoder := xmlit.DecodeElements(reader, Customer{}, Order{})
+  for decoder.HasNext() {
+    fmt.Println(decoder.Next())
+  }
+  if decoder.Error() {
+    // process error
+  }
 */
 package xmlit

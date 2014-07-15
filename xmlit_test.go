@@ -2,37 +2,39 @@ package xmlit
 
 import "testing"
 import "strings"
-import "github.com/jkeiser/iter"
 import "encoding/xml"
 import "io"
 
 func TestDecodeElements(t *testing.T) {
-	iterator := DecodeElements(StringReader(XMLARIFFIC), Abominable{}, SuperTramp{})
-	expectItem(t, iterator, SuperTramp{DogDays: 1, FunTimes: "ridgemont"})
-	expectItem(t, iterator, SuperTramp{DogDays: 2})
-	expectItem(t, iterator, Abominable{Serious: "snowman"})
-	expectItem(t, iterator, SuperTramp{DogDays: 3})
-	expectDoneIterating(t, iterator)
+	decoder := DecodeElements(StringReader(XMLARIFFIC), Abominable{}, SuperTramp{})
+	expectItem(t, decoder, SuperTramp{DogDays: 1, FunTimes: "ridgemont"})
+	expectItem(t, decoder, SuperTramp{DogDays: 2})
+	expectItem(t, decoder, Abominable{Serious: "snowman"})
+	expectItem(t, decoder, SuperTramp{DogDays: 3})
+	expectDoneIterating(t, decoder)
 }
 
 func TestDecodeElementsByXmlName(t *testing.T) {
-	iterator := DecodeElementsByXmlName(StringReader(XMLARIFFIC), CreatorMap{
-		xml.Name{Local: "LessAbominable"}: func() interface{} { return new(Abominable) },
-		xml.Name{Local: "SuperTramp"}:     func() interface{} { return new(SuperTramp) },
-	})
-	expectItem(t, iterator, SuperTramp{DogDays: 1, FunTimes: "ridgemont"})
-	expectItem(t, iterator, SuperTramp{DogDays: 2})
-	expectItem(t, iterator, Abominable{Serious: "iceman"})
-	expectItem(t, iterator, SuperTramp{DogDays: 3})
-	expectDoneIterating(t, iterator)
+	decoder := ElementDecoder{
+		Decoder: xml.NewDecoder(StringReader(XMLARIFFIC)),
+		Creators: CreatorMap{
+			xml.Name{Local: "LessAbominable"}: func() interface{} { return new(Abominable) },
+			xml.Name{Local: "SuperTramp"}:     func() interface{} { return new(SuperTramp) },
+		},
+	}
+	expectItem(t, &decoder, SuperTramp{DogDays: 1, FunTimes: "ridgemont"})
+	expectItem(t, &decoder, SuperTramp{DogDays: 2})
+	expectItem(t, &decoder, Abominable{Serious: "iceman"})
+	expectItem(t, &decoder, SuperTramp{DogDays: 3})
+	expectDoneIterating(t, &decoder)
 }
 
 func TestDecodeElementsWithErrorXml(t *testing.T) {
 	str := `<?xml version="1.0" encoding="UTF-8" ?>
 <blah><SuperTramp><DogDays>3</DogDays></SuperTramp><biddle`
-	iterator := DecodeElements(StringReader(str), SuperTramp{})
-	expectItem(t, iterator, SuperTramp{DogDays: 3})
-	expectError(t, iterator)
+	decoder := DecodeElements(StringReader(str), SuperTramp{})
+	expectItem(t, decoder, SuperTramp{DogDays: 3})
+	expectError(t, decoder)
 }
 
 const XMLARIFFIC = `
@@ -70,24 +72,28 @@ type Abominable struct {
 	Serious string
 }
 
-func expectItem(t *testing.T, iterator iter.Iterator, expected interface{}) {
-	item, err := iterator.Next()
+func expectItem(t *testing.T, decoder *ElementDecoder, expected interface{}) {
+	item := decoder.Next()
+	err := decoder.Error()
 	if item != expected || err != nil {
 		t.Errorf("Got %+v / %+v, expected item %+v", item, err, expected)
 	}
 }
 
-func expectError(t *testing.T, iterator iter.Iterator) {
-	item, err := iterator.Next()
+func expectError(t *testing.T, decoder *ElementDecoder) {
+	item := decoder.Next()
+	err := decoder.Error()
 	if err == nil || item != nil {
 		t.Errorf("Got %+v / %+v, expected error", item, err)
 	}
 }
 
-func expectDoneIterating(t *testing.T, iterator iter.Iterator) {
-	item, err := iterator.Next()
-	if err != iter.FINISHED || item != nil {
-		t.Errorf("Got %+v / %+v, expected iteration to be finished", item, err)
+func expectDoneIterating(t *testing.T, decoder *ElementDecoder) {
+	hasNext := decoder.HasNext()
+	if hasNext {
+		item := decoder.Next()
+		err := decoder.Error()
+		t.Errorf("Got hasNext=%v, %+v / %+v, expected iteration to be finished", hasNext, item, err)
 	}
 }
 
